@@ -1,0 +1,37 @@
+# 
+# # Creates Python 3.6 handler with API Gateway to support collecting contacts from product landing pages
+# # Contacts  [fn, ln, email, reviewer=Y/N, product ] are saved in a common s3 bucket - dgl-contacts
+#
+service: dgl-addContact
+
+# BUG
+#plugins:
+#  - serverless-python-requirements
+
+custom:
+  stage: "${opt:stage, env:SLS_STAGE, 'dev'}"
+  profile: "${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}"
+  log_level: "${env:LOG_LEVEL, 'INFO'}"
+
+  pythonRequirements:
+    dockerizePip: true
+
+provider:
+  name: aws
+  profile: ${self:custom.profile}
+  stage: ${self:custom.stage}
+  runtime: python3.6
+  environment:
+    LOG_LEVEL: ${self:custom.log_level}
+
+functions:
+  addContact:
+    handler: handlers/addContact.addContact
+    description: "Saves contacts in s3 bucket"
+    memorySize: 128
+    timeout: 30
+    events:
+      - http:
+          path: addContact
+          method: ANY
+
