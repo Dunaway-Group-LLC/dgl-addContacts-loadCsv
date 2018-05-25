@@ -1,8 +1,8 @@
-# 
+#
 # # Creates Python 3.6 handler with API Gateway to support collecting contacts from product landing pages
 # # Contacts  [fn, ln, email, reviewer=Y/N, product ] are saved in a common s3 bucket - dgl-contacts
 #
-service: dgl-addContact
+service: addContacts-loadCsv
 
 # BUG
 #plugins:
@@ -25,13 +25,11 @@ provider:
     LOG_LEVEL: ${self:custom.log_level}
 
 functions:
-  addContact:
-    handler: handlers/addContact.addContact
+  addContacts:
+    handler: handlers/addContacts.addContacts
     description: "Saves contacts in s3 bucket"
     memorySize: 128
     timeout: 30
     events:
-      - http:
-          path: addContact
-          method: ANY
-
+      - s3:
+          bucket: dgl-contacts
