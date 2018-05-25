@@ -20,14 +20,14 @@
         "s3SchemaVersion": "1.0",
         "configurationId": "151dfa64-d57a-4383-85ac-620bce65f269",
         "bucket": {
-          "name": "service-1474780369352-1",
+          "name": "dgl-contacts",
           "ownerIdentity": {
             "principalId": "A3QLJ3P3P5QY05"
           },
           "arn": "arn:aws:s3:::service-1474780369352-1"
         },
         "object": {
-          "key": "object",
+          "key": "new-lifelic/GAIC-LifeLic-CurrentMonth.csv",
           "size": 11,
           "eTag": "5eb63bbbe01eetd093cb22bb8f5acdc3",
           "sequencer": "0057E75D80IA35C3E0"
