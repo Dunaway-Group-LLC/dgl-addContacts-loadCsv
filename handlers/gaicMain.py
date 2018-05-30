@@ -21,11 +21,6 @@ from gaicClasses import FirmEmails
 from dglPickleToS3BucketClasses import S3pickleBucket, getPickleBucket
 
 
-class Usage(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-
-
 def readCsv(csvFileObject):
     """
     .csv header for download from GAIC
@@ -34,16 +29,6 @@ def readCsv(csvFileObject):
     Email,Qualification Date,Expiration Date
 
     """
-    contactsPers = Contacts(bucketName, keyName)  # contacts-pers email
-
-    contactsFirm = Contacts(bucketName, "firm-contacts")
-    # Will be stored in dgl-contacts bucket with object id firm-contacts
-    contactsPers = contactsPers.loadContacts(pb)
-    if contactsPers.contacts == {}:     # couldn't load Contacts
-        raise FileNotFoundError("Unable to load Contacts object")
-    firm_emails = FirmEmails()  # list of email domains from ins firms
-    if firm_emails == []:
-        raise FileNotFoundError("Unable to load FirmEmails object")
 
     reader = csv.DictReader(csvFileObject)
 
@@ -73,21 +58,3 @@ def readCsv(csvFileObject):
 # Store the new contactsFirm - both pers & firm_emails
     contactsPers.storeContacts()
     contactsFirm.storeContacts()
-
-#
-# # Main
-#
-
-
-def main(argv=None):
-
-        fn = args[0]
-        month = args[1]
-        bucketName = args[2]
-        keyName = args[3]
-        print("Args:", args, "Month: ", month)
-        # Connect bucket
-        pb = getPickleBucket(bucketName)     # bucket exists?
-        # Read .csv, keeping only current month items
-        readCsv(fn, month)
-        quit()

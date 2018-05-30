@@ -7,8 +7,13 @@
 #
 import boto3
 from botocore.exceptions import ClientError, ParamValidationError
-from dglPickleToS3BucketClasses import S3pickleBucket, getPickleBucket
+from handlers.dglPickleToS3BucketClasses import S3pickleBucket
+import pickle
 from io import BytesIO
+import logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 #
 # # class defs
@@ -85,7 +90,7 @@ class Contacts:
         else:
             return(False)
 
-    def loadContacts(self, bucket):
+    def loadContacts(self, s3pickle_bucket):
         """loadContacts(s3PickleBucket)
                 Gets pickled Contacts object from S2
                 unpickle
@@ -103,11 +108,13 @@ class Contacts:
 #            print("bucket keys", obj.key)
 
 #        self.contacts = BytesIO()   # unpickled comes as bytes
-        self.contacts = bucket.loadObject("contacts")
+        self.contacts = s3pickle_bucket.loadObject("contacts")
         if isinstance(self.contacts, dict):
             return(self)
         else:
-            quit(self.contacts)     # will contain error code
+            self.contacts = self.createContactsObject(self.bucketName)
+            # create new obj
+            return(self)
 
 #
 # # Pickle and store Contacts
@@ -142,15 +149,15 @@ class Contacts:
             print("In confirmContact")
             pass
 
-    def createContactsBucket(bucketName):
+    def createContactsObject(self, bucketName):
         """
         Create Contacts - put new Contacts object in S3 bucket 'dgl-contacts'
         """
-        print("bucket type:", type(bucketName))
+        logger.info(">>> bucket type: {}".format(type(bucketName)))
 
         s3 = boto3.resource('s3')                   # get S3.Object
 
-        contacts = Contacts(bucketName)    # Contacts object with empty dict
+        contacts = Contacts(bucketName, "contacts")  # Contacts obj empty dict
         body = pickle.dumps(contacts)      # serialized Contacts object
         try:
             s3.Object(contacts.bucketName, 'contacts').put(Body=body)

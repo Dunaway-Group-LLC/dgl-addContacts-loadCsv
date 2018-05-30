@@ -9,9 +9,11 @@
 import boto3
 import botocore
 import pickle
-from io import BytesIO
+from io import BytesIO, StringIO
 import logging
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 """Wraps S3 bucket operations, exceptions and connections
     - a Singleton object - so there's just one connection
@@ -54,13 +56,24 @@ class S3pickleBucket():
 
     def loadObject(self, objid):
             """Load & unpickle from s3 bucket wrapped by this instance
-                obj is class instance to be loaded & unpickled
                 objid is s3 key
+                returns unpickled object
                 """
-            obj = BytesIO
+            logger.info(">>>objid {} type {}".format(objid, type(objid)))
+            unpickled = ""
             try:
-                self.s3.Bucket(self.bucketName).download_file(objid, obj)
-                return(obj)
+                for obj_id in self.s3.Bucket(self.bucketName).objects.all():
+                    print("obj_id: ", obj_id)
+                    # logger.info("bucket key: {}").format(obj)
+
+                print("self.pickled", self.pickled)
+                self.pickled = self.s3.Object(self.bucketName, objid)  # FO
+                print("self.pickled", self.pickled)
+                body = self.pickled.get()["Body"].read()            # content
+                unpickled = pickle.loads(body)
+                print("unpickled", unpickled)
+
+                return(unpickled)
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == "404":
                     logging.error("Object %s does not exist" % (objid))

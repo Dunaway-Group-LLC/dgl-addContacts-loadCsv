@@ -6,26 +6,24 @@
 # # than individuals
 # # class loads list from file at __init__
 #
+from handlers.dglPickleToS3BucketClasses import S3pickleBucket
 
 
 class FirmEmails():
-    def __init__(self):
-        try:
-            """ CHANGE GO GET DOMAINS LIST FROM BUCKET """
-            f = open("/home/les/Downloads/dgl-FirmDomains.csv", "r")
-            self.firm_emails = []
-            self.firm_emails = f.read().split("@")  # Read list of domains
-        except (FileNotFoundError, f.Error) as e:
-            print(e)
-            print(e.args)
-            quit(False)
+    """FirmEmails holds a list of email domains known to belong to firms,
+    rather than individuals
+    """
 
-#
-# # Return true if email_domain is in firm_emails
-#
+    def __init__(self, pb):
+        """pb - S3pickleBucket give ref to where domains list is stored
+        """
+        self.pb = pb
+        self.firm_domains = pb.loadObject("firm-domains")
 
     def inFirmEmails(self, email_domain):
-        if email_domain in self.firm_emails:
+        """Return true if email_domain is in firm_emails
+        """
+        if email_domain in self.firm_domains:
             return True
         else:
             return False
