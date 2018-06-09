@@ -6,7 +6,7 @@
 # # than individuals
 # # class loads list from file at __init__
 #
-from handlers.dglPickleToS3BucketClasses import S3pickleBucket
+# from handlers.dglPickleToS3BucketClasses import S3pickleBucket
 
 
 class FirmEmails():
@@ -18,7 +18,7 @@ class FirmEmails():
         """pb - S3pickleBucket give ref to where domains list is stored
         """
         self.pb = pb
-        self.firm_domains = pb.loadObject("firm-domains")
+        self.firm_domains = pb.loadObject("domain-list")
 
     def inFirmEmails(self, email_domain):
         """Return true if email_domain is in firm_emails

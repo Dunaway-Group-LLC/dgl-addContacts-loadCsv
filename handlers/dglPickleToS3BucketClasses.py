@@ -11,6 +11,7 @@ import botocore
 import pickle
 from io import BytesIO, StringIO
 import logging
+from sys import getsizeof
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -39,39 +40,48 @@ class S3pickleBucket():
             """Pickle and save in s3 bucket wrapped by this instance
                 obj is class instance to be pickled & stored
                 objid is s3 key
+
             """
-            # s3 = boto3.resource('s3')                   # get S3.Object
-            # print("Bucket Name:", self.bucketName)
-            self.pickled = pickle.dumps(obj)     # serialized object
+            logger.info("In storeObject - {} / {}".format(obj, type(obj)))
+
+            self.pickled = pickle.dumps(obj)     # serialize object
+
+            print("self.pickled {} {} {}".format(
+                self.pickled, type(self.pickled), getsizeof(self.pickled)))
     # Store pickled object
             try:
-                self.s3.Object(self.bucketName, objid).put(Body=obj)
+                self.s3.Object(self.bucketName, objid).put(Body=self.pickled)
+                return(0)
             except botocore.exceptions.ClientError as e:
                 # If a client error thrown, then check it was a 404 error.
                 # If it was a 404 error, then the bucket does not exist.
                 error_code = int(e.response['Error']['Code'])
                 if error_code == 404:
                     logging.error("Specified bucket does not exist")
-                    return(None)  # go to the house
+                    return("Error code: ", error_code)  # go to the house
 
     def loadObject(self, objid):
             """Load & unpickle from s3 bucket wrapped by this instance
                 objid is s3 key
                 returns unpickled object
                 """
-            logger.info(">>>objid {} type {}".format(objid, type(objid)))
+            logger.info("loadObject>>>objid {} type {}".format(
+                objid, type(objid)))
             unpickled = ""
             try:
                 for obj_id in self.s3.Bucket(self.bucketName).objects.all():
-                    print("obj_id: ", obj_id)
+                    print("obj_id: ", obj_id)   # print object in bucket
                     # logger.info("bucket key: {}").format(obj)
 
-                print("self.pickled", self.pickled)
+                print("self.pickled", self.pickled, type(self.pickled))
                 self.pickled = self.s3.Object(self.bucketName, objid)  # FO
-                print("self.pickled", self.pickled)
-                body = self.pickled.get()["Body"].read()            # content
+                logger.info("aft get self.pickled {} / {} / {} / {}".format(
+                    self.pickled, type(self.pickled),
+                    self.pickled.content_length, self.pickled.content_type))
+                body = self.pickled.get()['Body'].read()   # content
+                print("Body", body, type(body))
                 unpickled = pickle.loads(body)
-                print("unpickled", unpickled)
+                print("unpickled", unpickled, type(unpickled))
 
                 return(unpickled)
             except botocore.exceptions.ClientError as e:

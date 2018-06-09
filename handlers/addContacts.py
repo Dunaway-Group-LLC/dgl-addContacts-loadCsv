@@ -46,30 +46,43 @@ def lambda_handler(event, context):
     # print(">>>>csvFileObject", type(csvFileObject))
 
     contactsPers = Contacts(bucket_name, file_key)  # contacts-pers email
-
+    # logger.info("contactsPers {} / {} / {} / {} / {}".format(
+    #     contactsPers, type(contactsPers), contactsPers.contacts,
+    #     type(contactsPers.contacts), contactsPers.bucketName))
     contactsFirm = Contacts(bucket_name, "firm-contacts")
     # Will be stored in dgl-contacts bucket with object id firm-contacts
-
+    # logger.info("contactsFirm {} / {} / {} / {} / {}".format(
+    #     contactsFirm, type(contactsFirm), contactsFirm.contacts,
+    #     type(contactsFirm.contacts), contactsFirm.bucketName))
     # Create pickle bucket
     pb = S3pickleBucket(bucket_name, s3)
     # logger.info("S3pickleBucket", type(pb))
     # load the existing Contacts
     contactsPers = contactsPers.loadContacts(pb)
-    if contactsPers.contacts == {}:     # couldn't load Contacts
-        raise FileNotFoundError("Unable to load Contacts object")
+    # logger.info("contactsPers aft loadContacts {} / {} / {} / {} / {}".format(
+    #     contactsPers, type(contactsPers), contactsPers.contacts,
+    #     type(contactsPers.contacts), contactsPers.bucketName))
+
+    # if contactsPers.contacts == {}:     # couldn't load Contacts
+    #     raise FileNotFoundError("Unable to load Contacts object")
+
     firm_emails = FirmEmails(pb)  # list of email domains from ins firms
     if firm_emails == []:
         raise FileNotFoundError("Unable to load FirmEmails object")
 
+    # logger.info("contactsPers {} / {} / {} / {} / {}".format(
+    #     contactsPers, type(contactsPers), contactsPers.contacts,
+    #     type(contactsPers.contacts), contactsPers.bucketName))
+
     # read and map the csv to Contact objects
-    readCsv(csvFile)
+    readCsv(csvFile, contactsPers, contactsFirm, firm_emails)
 
     # Store the new contactsFirm - both pers & firm_emails
-    contactsPers.storeContacts()
-    contactsFirm.storeContacts()
+    if contactsPers.storeContacts(pb) == 0:
+        return(contactsFirm.storeContacts(pb))
 
 
-def readCsv(csvFileObject):
+def readCsv(csvFileObject, contactsPers, contactsFirm, firm_emails):
     """
     .csv header for download from GAIC
     License Number,License Type,First Name,Middle Name,Last Name,
@@ -81,8 +94,8 @@ def readCsv(csvFileObject):
     reader = csv.DictReader(csvFileObject)
 
     for row in reader:
-        print("row: ", type(row), row)
-        print(row['First Name'], row['Last Name'])  # Just test reading
+        # print("row: ", type(row), row)
+        # print(row['First Name'], row['Last Name'])  # Just test reading
         # Create Contact for each row in .csv- incomplete
         contact = Contact(
             row["Email"], row["First Name"],
@@ -92,14 +105,14 @@ def readCsv(csvFileObject):
                 "Expiration Date": row["Expiration Date"]
             }
         )
-        logger.info('Contact: {} '.format(
+        logger.info('Contact: {} {} {} '.format(
             contact.first_name,
             contact.last_name,
             contact.email)
             )
-        print(
-            "Contact: ", contact.first_name, contact.last_name,
-            contact.email)
+        # print(
+        #     "Contact: ", contact.first_name, contact.last_name,
+        #     contact.email)
         # Add each to Contacts - either pers or firm by email domain
         if contact.email == "n/a":
             contact.email = "none@none.com"

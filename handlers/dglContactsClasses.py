@@ -52,6 +52,9 @@ class Contacts:
         self.contacts = {}          # Dictionary holding Contacts, key is email
         self.bucketName = bucketName    # Bucket name holding Contacts object
         self.keyName = keyName      # keyName / folder / object
+        logger.info("Instantiation {} / {} / {} / {} / {}".format(
+            self, type(self), self.contacts,
+            type(self.contacts), self.bucketName))
 
     def addContact(self,  contact):
         """ addContact(contact)
@@ -59,6 +62,8 @@ class Contacts:
             key - contact.email - must not be in Contacts
         """
         key = contact.email         # email is key for Contacts dict
+        # logger.info("self {} / {} / {} / {}".format(
+        #     self, type(self), self.contacts, type(self.contacts)))
         if key in self.contacts:    # Prevent dupes
             return(False)
         else:
@@ -108,7 +113,9 @@ class Contacts:
 #            print("bucket keys", obj.key)
 
 #        self.contacts = BytesIO()   # unpickled comes as bytes
-        self.contacts = s3pickle_bucket.loadObject("contacts")
+        contacts_object = s3pickle_bucket.loadObject("contacts")
+        logger.info("in loadContacts Contacts object {}".format(
+            contacts_object))
         if isinstance(self.contacts, dict):
             return(self)
         else:
@@ -119,26 +126,28 @@ class Contacts:
 #
 # # Pickle and store Contacts
 
-    def storeContacts(self):
+    def storeContacts(self, s3pickle_bucket):
             """
                 Pickle and save in s3
+                Using dglPickleToS3BucketClasses
             """
-            s3 = boto3.resource('s3')                   # get S3.Object
-            print("Bucket Name:", self.bucketName)
-            body = pickle.dumps(self.contacts)     # serialized Contacts dict
-    # Store contacts with firm email seperate, lookup pers email later
-            if self.bucketName == "firm-contacts":
-                objid = self.bucketName
-                self.bucketName = "dgl-contacts"
-            else:
-                objid = "contacts"
-            try:
-                s3.Object(self.bucketName, objid).put(Body=body)
-            except ParamValidationError as e:
-                print("Parameter validation error: %s" % e)
-            except ClientError as e:
-                print("Unexpected error: %s" % e)
-                print(e.response['Error']['Code'])
+            return(s3pickle_bucket.storeObject(self, "contacts"))
+    #         s3 = boto3.resource('s3')                   # get S3.Object
+    #         print("Bucket Name:", self.bucketName)
+    #         body = pickle.dumps(self.contacts)     # serialized Contacts dict
+    # # Store contacts with firm email seperate, lookup pers email later
+    #         if self.bucketName == "firm-contacts":
+    #             objid = self.bucketName
+    #             self.bucketName = "dgl-contacts"
+    #         else:
+    #             objid = "contacts"
+    #         try:
+    #             s3.Object(self.bucketName, objid).put(Body=body)
+    #         except ParamValidationError as e:
+    #             print("Parameter validation error: %s" % e)
+    #         except ClientError as e:
+    #             print("Unexpected error: %s" % e)
+    #             print(e.response['Error']['Code'])
 
 
 
